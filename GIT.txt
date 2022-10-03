@@ -1,3 +1,6 @@
 git pull --rebase origin master
 git pull --rebase origin develop 
 git push origin develop
+
+
+https://habr.com/en/post/342116/
