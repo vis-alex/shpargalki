@@ -1,0 +1,92 @@
+https://betacode.net/11773/spring-boot-and-mongodb
+
+
+mongock - самая актуальная и востребованая библиотека миграции для монго дб , такая как liquidbase или flyway для 
+реляционных бд
+
+testcontainers - библиотека позволяющая тестировать сервисы, очереди внутри докер контейнера
+
+use - команда которая использует определнную бд - use usersdb
+show dbs - показывает все имеющиеся бд
+show collections - показывает все коллекции в текущей дб
+db.stats() - показать статистику по бд
+db.имя_коллекции.stats() - показать статистику по определенной коллекции
+
+inserteOne(), insertMany() - Для добавления документов в коллекцию 
+db.users.find() - вывод документов коллекции
+
+Пример без указания айди(сгенерируется автоматически): 
+	db.users.insertOne({"name": "Tom", "age": 28, languages: ["english", "spanish"]})
+
+Пример для вставки нескольких документов : 
+	db.users.insertMany([
+	{"name": "Bob", "age": 26, languages: ["english", "french"]}, 
+	{"name": "Alice", "age": 31, languages:["german", "english"]}
+	])
+
+Пример с указанием айди:
+	db.users.insertOne({"_id": 123457, "name": "Tom", "age": 28, languages: ["english", "spanish"]})
+
+Еще способ вставки документа: 
+	document=({"name": "Bill", "age": 32, languages: ["english", "french"]})
+	db.users.insertOne(document)
+
+load() - загружает файл в формате js с диска
+
+Пример: load("D:/users.js")
+
+Поиск одиночного документа: Находит первый
+	db.users.findOne({name: "Tom"})
+
+Пример фильтрации: 
+	db.users.find({name: "Tom"}) - находит все документы с полем name=Tom
+	db.users.find({name: "Tom", age: 32}) - name=Tom, age=32
+	db.users.find({languages: ["english", "german"]}) - поиск документов в которых в массиве languages есть 
+		englis и german. Причем именно в этом порядке
+	
+	test> db.users.find({"friends.0.name": "Bob"}) - Выберем все документы, где в массиве friends
+		 свойство name первого элемента равно "Bob"
+
+Проекция: возле параметров указываются либо 0 и 1 , либо true и false. Для выборки нужный полей документа
+	db.users.find({name: "Tom"}, {age: 1}) - 
+		Использование единицы в качестве параметра {age: 1} 
+		указывает, что запрос должен вернуть только содержание свойства age.
+
+	db.persons.find({name: "Tom"}, {age: 0}) - 
+		И обратная ситуация: мы хотим найти все поля документа
+		 кроме свойства age. В этом случае в качестве параметра указываем 0
+
+	db.users.find({}, {age: 1, _id: 0})
+		Если мы не хотим при этом конкретизировать выборку, а хотим вывести все документы, 
+		то можно оставить первые фигурные скобки пустыми
+
+Можно использовать JS выражения и функции:
+	function sqrt(n) { return n*n; } - создаем функцию
+	sqrt(5) - применяем ее
+	db.users.find({age: sqrt(5)+3}) - используем поиск с использованием созданной ранее функции
+
+Можно использовать в поиске регулярные выражения: 
+	db.users.find({name:/^B\w+/i}) - ищет документы в которых поле name начинается  с B
+
+Курсор: Результат поиска можно передать в отдельную переменную
+	var cursor = db.users.find()
+	
+	Курсор имет методы next() и hasNext()
+
+		var cursor = db.users.find()
+ 
+		while(cursor.hasNext()){
+		  obj = cursor.next();
+	 	 print(obj["name"]);
+		}
+
+		или альтернатива: 
+
+		cursor.forEach(function(obj){
+ 		 print(obj.name);
+		})
+
+
+
+
+

@@ -1,0 +1,244 @@
+1)Есть сервисы - product, order.
+2)Чтобы получить конфиги они посылают запросы на конфиг сервер
+3)Конфиг сервер привязан к удаленному хранилищу(гитхаб например) из которого он получает конфиги.
+Их можно обновлять в рантайм с помощью spring actuator вручную(через аннотацию @Refresh..) ,
+либо с помощью брокера сообщений.
+4)Конфиденциальную инфу вроде логина, пароля, токенов, сертификатов мы храним в vault хранилище
+5)Api gateway получает от клиентов запросы и переадресует их на нужный сервис. Такое себе прокси api.
+Также занимается секьюрностью
+Реализация - Spring cloud gateway project.
+6)Keyclock  - Для того чтобы только аутентифицированные пользователи могли посылать запросы к Gateway API 
+На порту 8180 мы авторизуемся. Первое что нужно сделать - создать realm(область) в которойо хранятся юзеры, 
+клиенты и информация о приложении. Потом нам нужно зарегестрировать наш Gateway как клиента внутри keycloak.
+При обращении к product service api нас перенаправит на keycloak для авторизации
+
+
+						EUREKA: SERVICE DISCOVERY PATTERN
+В сервере:
+В помнике -
+ <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-netflix-eureka-server</artifactId>
+  </dependency>
+
+ @EnableEurekaServer в главном классе.
+
+в пропертях 
+#Move to eureka dashboard - http://localhost:8761
+#the most frequency used port for eureka server
+server.port=8761
+
+#It was adding because we don`t want to register server inside itself
+eureka.client.register-with-eureka=false
+
+#Disable the local copy of server
+eureka.client.fetch-registry=false
+
+На клиенте:
+В главном классе: @EnableEurekaClient
+
+В помнике 
+  	<dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
+            <version>3.1.3</version>
+        </dependency>
+В пропертях:
+	spring.application.name=product-service
+#0 - Spring dynamically auto assignment for port . Cause we need create multiple instances
+server.port=0
+
+#Unique service identifier for eureka
+eureka.instance.instance-id=${spring.application.name}:${random.uuid}
+
+
+	
+				CENTRALIZED CONFIGURATION PATTERN:
+
+Применяется для того чтобы если мы хотим изменить конфиги во всех product-service 
+нам не пришлось менять в каждом отдельно. Их могут быть сотни
+
+В сервере:
+В главном классе - @EnableConfigServer
+
+В помнике: 
+    <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-config-server</artifactId>
+        </dependency>
+
+
+В клиенте:
+<dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-config-client</artifactId>
+            <version>3.1.3</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-bootstrap</artifactId>
+            <version>3.1.3</version>
+        </dependency>
+
+Создаем bootstrap.properties
+ В нем:
+#Set the config server uri, from where will get configs
+spring.cloud.config.uri=http://localhost:8888
+
+
+				Refreshing confgigs in runtime:
+
+	Add to pom product and order services
+
+	<dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+
+	In controller:  @RefreshScope
+
+	Для обновления посылаем постзапрос на актуатор
+      http://localhost:51803/actuator/refresh
+
+	For testing need GET http://localhost:58533/api/test where port always new after restart
+
+
+				VAULT:
+
+Для хранения в Vault - запускаем  vault server -dev - в моде разработчика, все хранится в мемори
+ и пропадает при выключении сервера
+
+Сохраняем секреты в vault и настриваем конфиги
+
+В помнике: 
+ <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-vault-config</artifactId>
+            <version>3.1.1</version>
+        </dependency>
+
+			RABBITMQ:
+Скачать и запустить erlang. erl.exe файл
+
+Запускаем rabiitmq как брокер сообщений для извещения об изменениях в конфигурациях всех сервисов
+
+в помнике:
+   <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-bus-amqp</artifactId>
+            <version>3.1.2</version>
+        </dependency>
+
+В конфигах:
+#Rabbitmq for updating configuration on all our services
+spring.rabbitmq.host=localhost
+spring.rabbitmq.port=5672
+spring.rabbitmq.username=guest
+spring.rabbitmq.password=guest
+
+			API_GATEWAY:
+
+Для того чтобы все запрсоы шли в одну точку а оттуда рассылались по нужным сервисам
+
+В помнике:
+
+
+				KEYCLOAK 
+Запустить командой в bin директории файл standalone.bat -Djboss.http.port=8180     8180 - Стандартный порт
+
+				NOTIFICATION SERVER
+POM:
+   <!-- This dependency will enable binder to rabbitmq and will allow us
+        to send messages to rabbitmq from our project-->
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-stream-binder-rabbit</artifactId>
+            <version>3.2.4</version>
+        </dependency>
+
+
+			DISTRIBUTED TRACING (ZIPKIN + SLEUTH) -
+Один из микросервисных паттернов позволяющих отслеживать запрос - вводится уникальный trace id, 
+который один и тот же по всему пути нашего запроса
+
+POM:
+<!--For watching on request way throw microservices-->
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-sleuth</artifactId>
+            <version>3.1.3</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-sleuth-zipkin</artifactId>
+            <version>3.1.3</version>
+        </dependency>
+
+CONFIGS:
+#Sleuth
+spring.sleuth.circuitbreaker.enabled=false
+spring.sleuth.integration.enabled=true
+
+#Zipkin
+#Url of zipkin UI
+spring.zipkin.base-url=http://127.0.0.1:9411/
+#It is telling sleuth to collect all data without ignoring any request
+spring.sleuth.sampler.probability=1
+
+
+Zipkin надо скачать и запустить jar
+Адрес: http://127.0.0.1:9411/zipkin/
+
+				CENTRALIZED LOGGING - ES + LOGSTASH + KIBANA
+Для запуска logstash, es, kibana устанавливаем системные переменные в Path -
+E:\ElasticSearch\logstash\logstash-8.4.0\bin
+E:\ElasticSearch\kibana-8.4.0-windows-x86_64\kibana-8.4.0\bin
+E:\ElasticSearch\elasticsearch-8.4.0\elasticsearch-8.4.0\bin
+
+/Все должно быть одинаковой версии
+
+Запускается на localhost:9200
+В папке bin в cmd вводим elasticsearch. Открываем  cmd как admin
+
+Для запуска elasticsearch я убрал автоматическую секьюрность в elasticsearch.yml
+# Disable security features
+xpack.security.enabled: false
+
+
+Потом запускаем Kibana - в bin kibana.bat в cmd
+Запускается на  http://localhost:5601
+
+Для запуска logstash создаем logstash.conf файл 
+Переходим в место где он находится в cmd 
+Вводим bin/logstash -f logstash.conf
+
+Текст в logstash.conf
+input {
+	stdin {}
+}
+output {
+	elasticsearch {
+	hosts => ["localhost:9200"] 
+	index => "indexforlogstash"}
+}
+
+Закрыть сервер - Ctrl + C
+
+
+В pom микросервисов добавляем 
+   <dependency>
+            <groupId>net.logstash.logback</groupId>
+            <artifactId>logstash-logback-encoder</artifactId>
+            <version>7.2</version>
+        </dependency>
+
+Далее мы указываем в каком формате и каккой тип логов мы посылаем в logstash с помощью файла logback.xml
+Для спрингбута используем logback-spring.xml а дальше спринг автоматически настроит все бины для посылки логов
+
+Если не указали индексы в logstash(хранилища для темы) вручную
+Посмотреть все индексы - http://localhost:9200/_cat/indices
+ES имеет rest api из коробки в кибане. Можем вводить запросы

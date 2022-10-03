@@ -1,0 +1,55 @@
+	MOST IMPORTANT TUTORIAL - https://curl.se/
+
+
+				GET
+
+curl --help all
+	 - SEE ALL CURL OPTIONS
+
+curl http://google.com
+	- GET ONLY RESPONSE
+
+curl -L http://google.com
+	- - GET FULL RESPONSE
+
+curl -i https://reqres.in/api/users/2
+	- - GET RESPONSE + HEADERS
+
+curl --head https://reqres.in/api/users/2
+curl --I https://reqres.in/api/users/2
+	- GET ONLY HEADERS
+
+curl -v https://reqres.in/api/users/2
+	- SEE DETAILS OF SERVER-CLIENT INTERACTION
+
+curl --trace logtrace.txt https://reqres.in/api/users/2
+	- LOG ALL DETAILS IN FILE logtrace.txt.  SAVED IN C:\WINDOWS\system32
+
+
+curl --trace-ascii logtrace2.txt https://reqres.in/api/users/2
+	- LOG MORE DETAILS IN FILE logtrace2.txt.  SAVED IN C:\WINDOWS\system32
+	Используется для логирования если какие нужно найти проблему при запросе
+
+curl -H "Accept:application/json" https://reqres.in/api/users/2
+	- SEND HEADERS IN REQUEST
+
+				POST
+For POST we are using -d or --data 
+
+curl https://reqres.in/api/users --data "name=morpheus&job=leader" - POST DATA
+{
+    "name": "morpheus",
+    "job": "leader"
+}
+
+curl -X POST -i -H "Accept:application/json" https://reqres.in/api/users -d '{"name": "morpheus","job": "leader"}'
+	- Аналог предыдущего запроса POST вместе с хедером. Также получаем RESPONSE + HEADERS.
+	 Только в более удобной JSON форме
+
+				PUT
+curl -i -X PUT https://reqres.in/api/users/2 -d '{"name": "morpheus","job": "slave"}'
+	- PUT and UPDATE DATA
+
+				DELETE
+curl -i -X DELETE https://reqres.in/api/users/2 
+	- DELETE DATA

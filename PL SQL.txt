@@ -1,0 +1,73 @@
+Типичная структура:
+	DECLARE --optinal
+	Variable declaration
+	
+	BEGIN --mandatory
+	Tatements of the program
+
+	Exceptional --optional
+	Error handling
+
+	END;
+	/ - всегда пишется между блоками pl sql кода как разграничитель для компилятора
+
+Пример:
+
+	DECLARE 
+		N1 NUMBER := 5;
+		N2 NUMBER  := 0;
+	BEGIN 
+		DBMS_OUTPUT.PUT_LINE(N1 / N2);
+	EXCEPTION
+		WHEN ZERO_DIVIDE THEN	
+		DBMS_OUTPUT.PUT_LINE('Division by zero is not allowed')
+	END;
+	/
+
+declare
+    N1 constant number(4) := 25;
+    V1 varchar2(5) not null := 'HEY';
+begin
+   dbms_output.put_line(N1);
+   dbms_output.put_line('The value of V1 is ' || V1);
+end;
+/
+
+
+declare
+V NUMBER;
+begin
+select FIRST_NAME from hr.employees into V
+where FIRST_NAME = 'Diana';
+
+dbms_output.put_line(V);
+end;
+/
+
+
+
+Пример конкатенации - выведется sid HELLO
+DECLARE
+	NAME VARCHAR2(10) := 'sid';
+BEGIN
+	DBMS_OUTPUT.PUT_LINE(NAME || ' HELLO');
+
+
+Есть еще опциональный параметр size при обьявлении переменной
+V NUMBER(10,2) - precision 10, scale 2
+V VARCHAR2(10) - влезает 10 символов
+
+Создание константы - ее нельзя переопределить
+BDAY CONSTANT DATE := '20-FEB-2201'
+
+Можно указать что нельзя присваивать переменной NULL
+BDAY DATE NOT NULL = '20-FEB-2201'
+
+to_char(1) - преобразует в строку значение в скобках(переменную напрмиер)
+
+
+					СИНТАКСИС SELECT В PL/SQL
+SELECT column, column INTO memory_variable, memory_variable
+FROM table_name
+WHERE and other clauses
+

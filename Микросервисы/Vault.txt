@@ -1,0 +1,18 @@
+1) Скачать с помощью впн 
+2) Запустить с помощью cmd vault server -dev
+3) Установить системную переменную - set VAULT_ADDR=http://127.0.0.1:8200
+7) Необходимо добавить путь к фалу vault в path системных переменных виндуос
+4) Чтобы передать пары ключ зачения надо создать json файл в idea
+5) переходим в терминале туда где лежит этот файл
+6)Поместить файл в vault  -
+		vault kv put secret/order-service @order-service.json
+		vault kv put secret/product-service @product-service.json
+		vault kv put secret/inventory-service @inventory-service-credentials.json
+где order-service.json - созданный в idea файл креденшелами. 
+Эта команда создаст папку order-service в vault, зашифрует и положит туда содержимое json файла
+
+8) Чтобы проверить информацию оттуда - 
+		vault kv get secret/order-service
+		vault kv get secret/product-service
+		vault kv get secret/inventory-service
+
